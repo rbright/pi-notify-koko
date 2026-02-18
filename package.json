@@ -1,0 +1,73 @@
+{
+  "name": "@rbright/pi-notify-koko",
+  "version": "0.1.0",
+  "description": "Koko voice notifications for Pi agent turn completion.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Ryan Bright <ryan@moonriselabs.ai>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rbright/pi-notify-koko.git"
+  },
+  "homepage": "https://github.com/rbright/pi-notify-koko#readme",
+  "bugs": {
+    "url": "https://github.com/rbright/pi-notify-koko/issues"
+  },
+  "files": [
+    "src/index.ts",
+    "src/config.ts",
+    "src/notify.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-coding-agent",
+    "notifications",
+    "koko",
+    "tts"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "bun run lint && bun run typecheck && bun run test",
+    "prepublishOnly": "bun run check",
+    "precommit:install": "prek install",
+    "precommit:run": "prek run --all-files"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
+  "dependencies": {
+    "@rbright/pi-notify-core": "^0.1.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.2",
+    "@eslint/json": "0.14.0",
+    "@eslint/markdown": "7.5.1",
+    "@mariozechner/pi-coding-agent": "0.53.0",
+    "@types/node": "25.0.9",
+    "@vitest/coverage-v8": "4.0.17",
+    "eslint": "9.39.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-prettier": "5.5.5",
+    "eslint-plugin-unused-imports": "4.3.0",
+    "jiti": "2.6.1",
+    "prettier": "3.8.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.53.0",
+    "vitest": "4.0.17"
+  }
+}
