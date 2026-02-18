@@ -4,9 +4,22 @@ import { sanitizeNotificationText } from '@rbright/pi-notify-core';
 
 import { type KokoNotifyConfig, loadConfig } from './config';
 
-const MAX_TEXT_LENGTH = 240;
+const UNBOUNDED_MAX_LENGTH = Number.MAX_SAFE_INTEGER;
 
-type NotifyFailureReason = 'command-not-found' | 'disabled' | 'exit-nonzero' | 'non-tty' | 'spawn-error' | 'timeout';
+const EMOJI_REGEX = /(?:\p{Extended_Pictographic}|\u200D|\uFE0F)/gu;
+const MARKDOWN_LINK_REGEX = /\[([^\]]+)\]\(([^)]+)\)/g;
+const MARKDOWN_TOKEN_REGEX = /[*_~`#>|]/g;
+const RAW_URL_REGEX = /https?:\/\/\S+/g;
+const WRAPPER_PUNCTUATION_REGEX = /[()[\]{}<>]/g;
+
+type NotifyFailureReason =
+  | 'command-not-found'
+  | 'disabled'
+  | 'empty-message'
+  | 'exit-nonzero'
+  | 'non-tty'
+  | 'spawn-error'
+  | 'timeout';
 
 export interface NotifyFailure {
   notified: false;
@@ -79,11 +92,22 @@ function resolveDeps(partialDeps?: Partial<NotifierDeps>): NotifierDeps {
   };
 }
 
+export function sanitizeSpeechMessage(messageText: string): string {
+  const normalized = messageText
+    .replace(MARKDOWN_LINK_REGEX, '$1')
+    .replace(RAW_URL_REGEX, ' ')
+    .replace(EMOJI_REGEX, ' ')
+    .replace(MARKDOWN_TOKEN_REGEX, ' ')
+    .replace(WRAPPER_PUNCTUATION_REGEX, ' ');
+
+  return sanitizeNotificationText(normalized, '', UNBOUNDED_MAX_LENGTH);
+}
+
 export function createNotifier(partialDeps?: Partial<NotifierDeps>) {
   const deps = resolveDeps(partialDeps);
 
   return {
-    notifyTurnComplete(): NotifyResult {
+    notifyTurnComplete(messageText: string): NotifyResult {
       const config = loadConfig(deps.env);
 
       if (!config.enabled) {
@@ -94,7 +118,11 @@ export function createNotifier(partialDeps?: Partial<NotifierDeps>) {
         return { notified: false, reason: 'non-tty' };
       }
 
-      const text = sanitizeNotificationText(config.text, 'Turn complete', MAX_TEXT_LENGTH);
+      const text = sanitizeSpeechMessage(messageText);
+      if (text.length === 0) {
+        return { notified: false, reason: 'empty-message' };
+      }
+
       const args = buildArgs(config, text);
       const runResult = deps.run(config.command, args, config.timeoutMs);
 
@@ -127,6 +155,6 @@ export function createNotifier(partialDeps?: Partial<NotifierDeps>) {
   };
 }
 
-export function notifyTurnComplete(partialDeps?: Partial<NotifierDeps>): NotifyResult {
-  return createNotifier(partialDeps).notifyTurnComplete();
+export function notifyTurnComplete(messageText: string, partialDeps?: Partial<NotifierDeps>): NotifyResult {
+  return createNotifier(partialDeps).notifyTurnComplete(messageText);
 }

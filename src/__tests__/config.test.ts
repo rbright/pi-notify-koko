@@ -13,7 +13,6 @@ describe('loadConfig', () => {
       enabled: true,
       modelDir: undefined,
       noPlay: false,
-      text: 'Turn complete. Awaiting your feedback.',
       timeoutMs: 15_000,
       voice: undefined,
     });
@@ -26,7 +25,6 @@ describe('loadConfig', () => {
       PI_NOTIFY_KOKO_ENABLED: 'false',
       PI_NOTIFY_KOKO_MODEL_DIR: ' /models/koko ',
       PI_NOTIFY_KOKO_NO_PLAY: 'yes',
-      PI_NOTIFY_KOKO_TEXT: 'Agent done',
       PI_NOTIFY_KOKO_TIMEOUT_MS: '2500',
       PI_NOTIFY_KOKO_VOICE: 'af_heart',
     });
@@ -36,7 +34,6 @@ describe('loadConfig', () => {
     expect(config.enabled).toBe(false);
     expect(config.modelDir).toBe('/models/koko');
     expect(config.noPlay).toBe(true);
-    expect(config.text).toBe('Agent done');
     expect(config.timeoutMs).toBe(2500);
     expect(config.voice).toBe('af_heart');
   });

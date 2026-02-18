@@ -1,6 +1,6 @@
 {
   "name": "@rbright/pi-notify-koko",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Koko voice notifications for Pi agent turn completion.",
   "type": "module",
   "license": "MIT",

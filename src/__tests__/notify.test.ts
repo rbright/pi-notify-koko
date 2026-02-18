@@ -1,12 +1,32 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { notifyTurnComplete } from '../notify';
+import { notifyTurnComplete, sanitizeSpeechMessage } from '../notify';
+
+describe('sanitizeSpeechMessage', () => {
+  it('removes markdown symbols, emojis, and links', () => {
+    const result = sanitizeSpeechMessage('**Done** ✅ [docs](https://example.com) _now_');
+    expect(result).toBe('Done docs now');
+  });
+
+  it('returns empty string when speech text has no readable content', () => {
+    const result = sanitizeSpeechMessage('*** ✅🎉 ***');
+    expect(result).toBe('');
+  });
+
+  it('does not truncate long assistant responses', () => {
+    const longText = `${'word '.repeat(400)}done`;
+    const result = sanitizeSpeechMessage(longText);
+
+    expect(result.endsWith('done')).toBe(true);
+    expect(result.split(' ').length).toBe(401);
+  });
+});
 
 describe('notifyTurnComplete', () => {
   it('returns disabled when notifications are off', () => {
     const run = vi.fn();
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('assistant reply', {
       env: {
         PI_NOTIFY_KOKO_ENABLED: 'false',
       },
@@ -23,7 +43,7 @@ describe('notifyTurnComplete', () => {
   it('skips non-tty by default', () => {
     const run = vi.fn();
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('assistant reply', {
       env: {},
       run,
       stdout: {
@@ -38,7 +58,7 @@ describe('notifyTurnComplete', () => {
   it('allows non-tty when explicitly enabled', () => {
     const run = vi.fn(() => ({ signal: null, status: 0 }));
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('assistant reply', {
       env: {
         PI_NOTIFY_KOKO_ALLOW_NON_TTY: 'true',
       },
@@ -52,6 +72,21 @@ describe('notifyTurnComplete', () => {
     expect(run).toHaveBeenCalledOnce();
   });
 
+  it('returns empty-message when sanitized text becomes empty', () => {
+    const run = vi.fn();
+
+    const result = notifyTurnComplete('\u0007\u001b ; ;', {
+      env: {},
+      run,
+      stdout: {
+        isTTY: true,
+      },
+    });
+
+    expect(result).toEqual({ notified: false, reason: 'empty-message' });
+    expect(run).not.toHaveBeenCalled();
+  });
+
   it('returns command-not-found when koko binary is missing', () => {
     const run = vi.fn(() => ({
       error: {
@@ -61,7 +96,7 @@ describe('notifyTurnComplete', () => {
       status: null,
     }));
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('assistant reply', {
       env: {},
       run,
       stdout: {
@@ -85,7 +120,7 @@ describe('notifyTurnComplete', () => {
       status: null,
     }));
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('assistant reply', {
       env: {},
       run,
       stdout: {
@@ -106,7 +141,7 @@ describe('notifyTurnComplete', () => {
       status: null,
     }));
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('assistant reply', {
       env: {},
       run,
       stdout: {
@@ -123,7 +158,7 @@ describe('notifyTurnComplete', () => {
       status: 2,
     }));
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('assistant reply', {
       env: {},
       run,
       stdout: {
@@ -144,13 +179,12 @@ describe('notifyTurnComplete', () => {
       status: 0,
     }));
 
-    const result = notifyTurnComplete({
+    const result = notifyTurnComplete('**Done** ;\u0007 ✅', {
       env: {
         PI_NOTIFY_KOKO_ARGS_JSON: '["--device","cpu"]',
         PI_NOTIFY_KOKO_COMMAND: 'koko-custom',
         PI_NOTIFY_KOKO_MODEL_DIR: '/models/koko',
         PI_NOTIFY_KOKO_NO_PLAY: 'true',
-        PI_NOTIFY_KOKO_TEXT: 'Done ;\u0007',
         PI_NOTIFY_KOKO_TIMEOUT_MS: '9999',
         PI_NOTIFY_KOKO_VOICE: 'af_heart',
       },

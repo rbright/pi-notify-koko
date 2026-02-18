@@ -41,7 +41,9 @@ The extension is zero-config by default.
 
 - completion trigger: final assistant `message_end` (non-tool) with `agent_end` fallback
 - per-agent dedupe: one Koko invocation per completed agent run
-- executes `koko` with a short message
+- speaks the last assistant response text (sanitized, no truncation)
+- strips markdown/link formatting, wrapper symbols, and emojis before speaking
+- if no assistant response text is available, it says nothing
 - skips non-TTY sessions by default
 
 ## Configuration (optional)
@@ -50,7 +52,6 @@ The extension is zero-config by default.
 | --- | --- | --- |
 | `PI_NOTIFY_KOKO_ENABLED` | `true` | Enable/disable notifications |
 | `PI_NOTIFY_KOKO_COMMAND` | `koko` | Koko executable name/path |
-| `PI_NOTIFY_KOKO_TEXT` | `Turn complete. Awaiting your feedback.` | Spoken message |
 | `PI_NOTIFY_KOKO_TIMEOUT_MS` | `15000` | Subprocess timeout in ms |
 | `PI_NOTIFY_KOKO_ALLOW_NON_TTY` | `false` | Allow triggering in non-TTY contexts |
 | `PI_NOTIFY_KOKO_VOICE` | unset | Passed as `--voice <value>` |
@@ -62,7 +63,6 @@ Example:
 
 ```bash
 export PI_NOTIFY_KOKO_VOICE=af_heart
-export PI_NOTIFY_KOKO_TEXT='Agent turn complete'
 pi
 ```
 

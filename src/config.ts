@@ -4,14 +4,12 @@ export interface KokoNotifyConfig {
   enabled: boolean;
   modelDir?: string;
   noPlay: boolean;
-  text: string;
   timeoutMs: number;
   voice?: string;
   argsJson: string[];
 }
 
 const DEFAULT_COMMAND = 'koko';
-const DEFAULT_TEXT = 'Turn complete. Awaiting your feedback.';
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {
@@ -81,7 +79,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): KokoNotifyConfig {
     enabled: parseBoolean(env.PI_NOTIFY_KOKO_ENABLED, true),
     modelDir: parseNonEmpty(env.PI_NOTIFY_KOKO_MODEL_DIR),
     noPlay: parseBoolean(env.PI_NOTIFY_KOKO_NO_PLAY, false),
-    text: parseNonEmpty(env.PI_NOTIFY_KOKO_TEXT) ?? DEFAULT_TEXT,
     timeoutMs: parsePositiveInteger(env.PI_NOTIFY_KOKO_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
     voice: parseNonEmpty(env.PI_NOTIFY_KOKO_VOICE),
   };
