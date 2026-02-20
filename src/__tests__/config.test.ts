@@ -1,6 +1,11 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { chmod, mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { loadConfig } from '../config';
+import { loadConfig, resolveDefaultCommand } from '../config';
 
 describe('loadConfig', () => {
   it('uses defaults', () => {
@@ -9,10 +14,11 @@ describe('loadConfig', () => {
     expect(config).toEqual({
       allowNonTty: false,
       argsJson: [],
-      command: 'koko',
+      command: resolveDefaultCommand(),
       enabled: true,
       modelDir: undefined,
       noPlay: false,
+      summarize: true,
       timeoutMs: 15_000,
       voice: undefined,
     });
@@ -25,6 +31,7 @@ describe('loadConfig', () => {
       PI_NOTIFY_KOKO_ENABLED: 'false',
       PI_NOTIFY_KOKO_MODEL_DIR: ' /models/koko ',
       PI_NOTIFY_KOKO_NO_PLAY: 'yes',
+      PI_NOTIFY_KOKO_SUMMARIZE: 'off',
       PI_NOTIFY_KOKO_TIMEOUT_MS: '2500',
       PI_NOTIFY_KOKO_VOICE: 'af_heart',
     });
@@ -34,6 +41,7 @@ describe('loadConfig', () => {
     expect(config.enabled).toBe(false);
     expect(config.modelDir).toBe('/models/koko');
     expect(config.noPlay).toBe(true);
+    expect(config.summarize).toBe(false);
     expect(config.timeoutMs).toBe(2500);
     expect(config.voice).toBe('af_heart');
   });
@@ -54,5 +62,24 @@ describe('loadConfig', () => {
 
     expect(config.argsJson).toEqual([]);
     expect(config.timeoutMs).toBe(15_000);
+  });
+});
+
+describe('resolveDefaultCommand', () => {
+  it('falls back to koko when local venv command is absent', async () => {
+    const homePath = await mkdtemp(join(tmpdir(), 'koko-home-'));
+
+    expect(resolveDefaultCommand(homePath)).toBe('koko');
+  });
+
+  it('prefers local venv koko command when executable', async () => {
+    const homePath = await mkdtemp(join(tmpdir(), 'koko-home-'));
+    const commandPath = join(homePath, 'Projects', 'koko', '.venv', 'bin', 'koko');
+
+    mkdirSync(join(homePath, 'Projects', 'koko', '.venv', 'bin'), { recursive: true });
+    writeFileSync(commandPath, '#!/usr/bin/env sh\necho koko\n', { encoding: 'utf8' });
+    await chmod(commandPath, 0o755);
+
+    expect(resolveDefaultCommand(homePath)).toBe(commandPath);
   });
 });

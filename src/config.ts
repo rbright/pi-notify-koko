@@ -1,9 +1,14 @@
+import { accessSync, constants } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
 export interface KokoNotifyConfig {
   allowNonTty: boolean;
   command: string;
   enabled: boolean;
   modelDir?: string;
   noPlay: boolean;
+  summarize: boolean;
   timeoutMs: number;
   voice?: string;
   argsJson: string[];
@@ -11,6 +16,24 @@ export interface KokoNotifyConfig {
 
 const DEFAULT_COMMAND = 'koko';
 const DEFAULT_TIMEOUT_MS = 15_000;
+
+function isExecutable(path: string): boolean {
+  try {
+    accessSync(path, constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function resolveDefaultCommand(homePath: string = homedir()): string {
+  const localVenvCommand = join(homePath, 'Projects', 'koko', '.venv', 'bin', 'koko');
+  if (isExecutable(localVenvCommand)) {
+    return localVenvCommand;
+  }
+
+  return DEFAULT_COMMAND;
+}
 
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   if (value == null) {
@@ -75,10 +98,11 @@ export function loadConfig(env: NodeJS.ProcessEnv): KokoNotifyConfig {
   return {
     allowNonTty: parseBoolean(env.PI_NOTIFY_KOKO_ALLOW_NON_TTY, false),
     argsJson: parseArgsJson(env.PI_NOTIFY_KOKO_ARGS_JSON),
-    command: parseNonEmpty(env.PI_NOTIFY_KOKO_COMMAND) ?? DEFAULT_COMMAND,
+    command: parseNonEmpty(env.PI_NOTIFY_KOKO_COMMAND) ?? resolveDefaultCommand(),
     enabled: parseBoolean(env.PI_NOTIFY_KOKO_ENABLED, true),
     modelDir: parseNonEmpty(env.PI_NOTIFY_KOKO_MODEL_DIR),
     noPlay: parseBoolean(env.PI_NOTIFY_KOKO_NO_PLAY, false),
+    summarize: parseBoolean(env.PI_NOTIFY_KOKO_SUMMARIZE, true),
     timeoutMs: parsePositiveInteger(env.PI_NOTIFY_KOKO_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
     voice: parseNonEmpty(env.PI_NOTIFY_KOKO_VOICE),
   };

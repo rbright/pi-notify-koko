@@ -42,6 +42,8 @@ The extension is zero-config by default.
 - completion trigger: final assistant `message_end` (non-tool) with `agent_end` fallback
 - per-agent dedupe: one Koko invocation per completed agent run
 - speaks the last assistant response text (sanitized, no truncation)
+- enables Koko `--summarize` by default for concise spoken output
+- prefers local `~/Projects/koko/.venv/bin/koko` when available (falls back to `koko` on PATH)
 - strips markdown/link formatting, wrapper symbols, and emojis before speaking
 - if no assistant response text is available, it says nothing
 - skips non-TTY sessions by default
@@ -51,12 +53,13 @@ The extension is zero-config by default.
 | Variable | Default | Description |
 | --- | --- | --- |
 | `PI_NOTIFY_KOKO_ENABLED` | `true` | Enable/disable notifications |
-| `PI_NOTIFY_KOKO_COMMAND` | `koko` | Koko executable name/path |
+| `PI_NOTIFY_KOKO_COMMAND` | `~/Projects/koko/.venv/bin/koko` (if present), else `koko` | Koko executable name/path |
 | `PI_NOTIFY_KOKO_TIMEOUT_MS` | `15000` | Subprocess timeout in ms |
 | `PI_NOTIFY_KOKO_ALLOW_NON_TTY` | `false` | Allow triggering in non-TTY contexts |
 | `PI_NOTIFY_KOKO_VOICE` | unset | Passed as `--voice <value>` |
 | `PI_NOTIFY_KOKO_MODEL_DIR` | unset | Passed as `--model-dir <value>` |
 | `PI_NOTIFY_KOKO_NO_PLAY` | `false` | Adds `--no-play` |
+| `PI_NOTIFY_KOKO_SUMMARIZE` | `true` | Adds `--summarize` unless args already include `--summarize`/`--no-summarize` |
 | `PI_NOTIFY_KOKO_ARGS_JSON` | unset | JSON array of extra args (e.g. `["--device","cpu"]`) |
 
 Example:

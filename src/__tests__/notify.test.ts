@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { resolveDefaultCommand } from '../config';
 import { notifyTurnComplete, sanitizeSpeechMessage } from '../notify';
 
 describe('sanitizeSpeechMessage', () => {
@@ -195,15 +196,50 @@ describe('notifyTurnComplete', () => {
     });
 
     expect(result).toEqual({
-      args: ['--device', 'cpu', '--voice', 'af_heart', '--model-dir', '/models/koko', '--no-play', 'Done'],
+      args: [
+        '--device',
+        'cpu',
+        '--summarize',
+        '--voice',
+        'af_heart',
+        '--model-dir',
+        '/models/koko',
+        '--no-play',
+        'Done',
+      ],
       command: 'koko-custom',
       notified: true,
     });
 
     expect(run).toHaveBeenCalledWith(
       'koko-custom',
-      ['--device', 'cpu', '--voice', 'af_heart', '--model-dir', '/models/koko', '--no-play', 'Done'],
+      ['--device', 'cpu', '--summarize', '--voice', 'af_heart', '--model-dir', '/models/koko', '--no-play', 'Done'],
       9999,
     );
+  });
+
+  it('does not auto-add summarize when explicitly disabled', () => {
+    const run = vi.fn(() => ({
+      signal: null,
+      status: 0,
+    }));
+
+    const result = notifyTurnComplete('Done', {
+      env: {
+        PI_NOTIFY_KOKO_ARGS_JSON: '["--no-summarize"]',
+      },
+      run,
+      stdout: {
+        isTTY: true,
+      },
+    });
+
+    expect(result).toEqual({
+      args: ['--no-summarize', 'Done'],
+      command: resolveDefaultCommand(),
+      notified: true,
+    });
+
+    expect(run).toHaveBeenCalledWith(resolveDefaultCommand(), ['--no-summarize', 'Done'], 15_000);
   });
 });

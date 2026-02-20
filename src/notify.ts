@@ -52,8 +52,16 @@ interface NotifierDeps {
   run: (command: string, args: string[], timeoutMs: number) => RunResult;
 }
 
+function hasSummarizeToggle(args: string[]): boolean {
+  return args.includes('--summarize') || args.includes('--no-summarize');
+}
+
 function buildArgs(config: KokoNotifyConfig, text: string): string[] {
   const args = [...config.argsJson];
+
+  if (config.summarize && !hasSummarizeToggle(args)) {
+    args.push('--summarize');
+  }
 
   if (config.voice) {
     args.push('--voice', config.voice);
